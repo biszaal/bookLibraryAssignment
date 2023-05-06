@@ -1,0 +1,23 @@
+{
+    "007": {
+        "password": "sarna",
+        "name": "stish",
+        "uType": "staff",
+        "department": "computing",
+        "lBooksB": []
+    },
+    "rita": {
+        "password": "sarna2",
+        "name": "rita",
+        "uType": "student",
+        "studentClass": "software",
+        "lBooksB": []
+    },
+    "uid": {
+        "password": "password",
+        "name": "name",
+        "uType": "student",
+        "studentClass": "classss",
+        "lBooksB": []
+    }
+}
