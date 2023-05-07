@@ -54,6 +54,8 @@ class LibManSystem:
         elif (uType == "staff"):
             department = input("Enter name of your department: ").lower()
             user_obj = Staff(uid, name, password, department)
+        elif (uType == "librarian"):
+            user_obj = Librarian(uid, name, password)
 
         try:
             self.database.insert_user(user_obj)
@@ -80,7 +82,11 @@ class LibManSystem:
             user = self.authenticate(self.database, uid, password)
             if user:
                 print(f"Welcome, {user.name}!")
-                user.menu(self.database)
+                if user.uType == "librarian":
+                    librarian = Librarian(user.uid, user.name, user.password)
+                    librarian.lib_menu(self.database)
+                else:
+                    user.menu(self.database)
             else:
                 print("Login failed. Please try again.")
 
@@ -88,9 +94,9 @@ class LibManSystem:
         with open('books.json') as f:
             books = json.load(f)
             for book in books:
-                authors = book["authors"]
+                publicationYear = book["publication_date"].split("/")[2]
                 available = random.randint(0, 10)
-                book_obj = Book(book["isbn"], book["title"], book["publisher"], book["authors"],
+                book_obj = Book(book["isbn"], book["title"], book["authors"], book["publisher"], publicationYear,
                                 available=available)
                 self.database.insert_book(book_obj)
 
@@ -108,6 +114,8 @@ class LibManSystem:
                 elif data["uType"] == "student":
                     user_obj = Student(
                         uid, data["name"], data["password"], data["studentClass"])
+                elif data["uType"] == "librarian":
+                    user_obj = Librarian(uid, data["name"], data["password"])
                 existing_user = self.database.get_user(uid)
                 if not existing_user:
                     self.database.insert_user(user_obj)

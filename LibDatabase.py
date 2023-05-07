@@ -10,6 +10,7 @@ class LibDatabase:
         self.create_accounts_table()
         self.create_borrowed_books_table()
         self.create_reserved_books_table()
+        self.create_returned_books_table()
 
     def create_books_table(self):
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS books(
@@ -17,6 +18,7 @@ class LibDatabase:
             title TEXT,
             authors TEXT,
             publisher TEXT,
+            publicationYear TEXT,
             available INTEGER
             )""")
         self.conn.commit()
@@ -75,20 +77,43 @@ class LibDatabase:
         )""")
         self.conn.commit()
 
-    def insert_book(self, b):
+    def create_returned_books_table(self):
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS returnedBooks(
+            returnID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+            uid TEXT,
+            isbn TEXT,
+            dateBorrowed TEXT,
+            dateReturned TEXT
+        )""")
+        self.conn.commit()
+
+    def insert_book(self, book):
         try:
-            self.cursor.execute("INSERT INTO books (isbn, title, authors, publisher, available) VALUES (?, ?, ?, ?, ?)", (
-                b.isbn, b.title, b.authors, b.publisher, b.available))
+            self.cursor.execute("INSERT INTO books (isbn, title, authors, publisher, publicationYear, available) VALUES (?, ?, ?, ?, ?, ?)", (
+                book.isbn, book.title, book.authors, book.publisher, book.publicationYear, book.available))
             self.conn.commit()
         except sqlite3.IntegrityError:
             print("Book already exists in the database.")
 
-    def search(self, opt, s):
-        s = '%' + s + '%'
-        if opt in ['title', 'authors']:
-            cmd = f'SELECT * FROM books WHERE {opt} LIKE ?'
-            self.cursor.execute(cmd, (s,))
-        return self.cursor.fetchall()
+    def delete_book(self, isbn):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = "DELETE FROM books WHERE isbn = ?"
+        self.cursor.execute(query, (isbn,))
+
+        self.conn.commit()
+        self.conn.close()
+
+    def update_book_availability(self, isbn, new_availability):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = "UPDATE books SET available = ? WHERE isbn = ?"
+        self.cursor.execute(query, (new_availability, isbn))
+
+        self.conn.commit()
+        self.conn.close()
     
     def get_borrowed_book(self, isbn, uid):
         self.conn = sqlite3.connect('main.sqlite')
@@ -103,6 +128,95 @@ class LibDatabase:
         if borrowed_book_data:
             return borrowed_book_data
         return None
+    
+    def get_borrowed_books_by_uid(self, uid):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """SELECT b.*, bb.dateBorrowed
+                FROM borrowedBooks AS bb
+                JOIN books AS b ON bb.isbn = b.isbn
+                WHERE bb.uid = ?"""
+        self.cursor.execute(query, (uid,))
+        borrowed_books = self.cursor.fetchall()
+
+        self.conn.close()
+        return borrowed_books
+
+
+    def get_reserved_books_by_uid(self, uid):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """SELECT b.*, rb.dateReserved
+                FROM reservedBooks AS rb
+                JOIN books AS b ON rb.isbn = b.isbn
+                WHERE rb.uid = ?"""
+        self.cursor.execute(query, (uid,))
+        reserved_books = self.cursor.fetchall()
+
+        self.conn.close()
+        return reserved_books
+
+    def get_reserved_books_by_uid(self, uid):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """
+            SELECT b.isbn, b.title, rb.dateReserved
+            FROM reservedBooks as rb
+            INNER JOIN books as b ON rb.isbn = b.isbn
+            WHERE rb.uid = ?
+        """
+        self.cursor.execute(query, (uid,))
+        results = self.cursor.fetchall()
+
+        self.conn.close()
+        return results
+
+    def get_returned_books_by_uid(self, uid):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """
+            SELECT b.isbn, b.title, r.dateBorrowed, r.dateReturned
+            FROM returnedBooks as r
+            INNER JOIN books as b ON r.isbn = b.isbn
+            WHERE r.uid = ?
+        """
+        self.cursor.execute(query, (uid,))
+        results = self.cursor.fetchall()
+
+        self.conn.close()
+        return results
+
+    def get_all_borrowed_books(self):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """SELECT b.*, bb.dateBorrowed, bb.uid
+                FROM borrowedBooks AS bb
+                JOIN books AS b ON bb.isbn = b.isbn"""
+        self.cursor.execute(query)
+        borrowed_books = self.cursor.fetchall()
+
+        self.conn.close()
+        return borrowed_books
+
+
+    def get_all_reserved_books(self):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """SELECT b.*, rb.dateReserved, rb.uid
+                FROM reservedBooks AS rb
+                JOIN books AS b ON rb.isbn = b.isbn"""
+        self.cursor.execute(query)
+        reserved_books = self.cursor.fetchall()
+
+        self.conn.close()
+        return reserved_books
+
 
     def get_reserved_book(self, isbn, uid):
         self.conn = sqlite3.connect('main.sqlite')
@@ -133,6 +247,23 @@ class LibDatabase:
             return book_data
         return None
 
+    def search_books(self, keyword):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """
+        SELECT * FROM books
+        WHERE title LIKE ? OR authors LIKE ? OR publisher LIKE ? OR publicationYear LIKE ?
+        """
+        wildcard_keyword = f"%{keyword}%"
+        self.cursor.execute(
+            query, (wildcard_keyword, wildcard_keyword, wildcard_keyword, wildcard_keyword))
+
+        results = self.cursor.fetchall()
+
+        self.conn.close()
+        return results
+
     def borrow_book(self, isbn, uid, date, isReserved):
         self.conn = sqlite3.connect('main.sqlite')
         self.cursor = self.conn.cursor()
@@ -150,9 +281,14 @@ class LibDatabase:
             "INSERT INTO borrowedBooks (uid, isbn, dateBorrowed) VALUES (?, ?, ?)", (uid, isbn, date,))
         self.conn.commit()
 
-    def return_book(self, isbn, uid):
+    def return_book(self, isbn, uid, date_returned):
         self.conn = sqlite3.connect('main.sqlite')
         self.cursor = self.conn.cursor()
+
+        # Fetch the dateBorrowed from the borrowedBooks table
+        self.cursor.execute(
+            "SELECT dateBorrowed FROM borrowedBooks WHERE uid=? AND isbn=?", (uid, isbn,))
+        date_borrowed = self.cursor.fetchone()[0]
 
         self.cursor.execute(
             "UPDATE books SET available=available+1 WHERE isbn=?", (isbn,))
@@ -160,8 +296,17 @@ class LibDatabase:
             "UPDATE accounts SET num_borrowedBooks=num_borrowedBooks-1 WHERE uid=?", (
                 uid,))
         self.cursor.execute(
+            "UPDATE accounts SET num_returnedBooks=num_returnedBooks+1 WHERE uid=?", (
+                uid,))
+        self.cursor.execute(
             "DELETE FROM borrowedBooks WHERE borrowID = (SELECT MIN(borrowID) FROM borrowedBooks WHERE uid=? AND isbn=?)", (uid, isbn,))
+
+        # Insert the returned book record into the returnedBooks table
+        self.cursor.execute(
+            "INSERT INTO returnedBooks (uid, isbn, dateBorrowed, dateReturned) VALUES (?, ?, ?, ?)", (uid, isbn, date_borrowed, date_returned,))
+
         self.conn.commit()
+        self.conn.close()
 
     def renew_book(self, isbn, uid, new_borrow_date):
         self.conn = sqlite3.connect('main.sqlite')
@@ -186,6 +331,9 @@ class LibDatabase:
         self.conn.commit()
 
     def get_users(self):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+        
         self.cursor.execute("SELECT * FROM users")
         return self.cursor.fetchall()
 
@@ -215,6 +363,9 @@ class LibDatabase:
             elif user.uType == "student":
                 self.cursor.execute("INSERT INTO users (uid, password, name, uType, studentClass) VALUES (?, ?, ?, ?, ?)", (
                     user.uid, user.password, user.name, user.uType, user.studentClass))
+            elif user.uType == "librarian":
+                self.cursor.execute("INSERT INTO users (uid, password, name, uType) VALUES (?, ?, ?, ?)", (
+                    user.uid, user.password, user.name, user.uType))
             self.conn.commit()
             self.insert_account(user.uid)
             print(f"User {user.uid} inserted successfully.")
@@ -222,8 +373,14 @@ class LibDatabase:
             print(f"User {user.uid} already exists in the database.")
 
     def get_user(self, uid):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
         self.cursor.execute(f'SELECT * FROM users WHERE uid=?', (uid,))
         return self.cursor.fetchone()
+
+        self.conn.commit()
+        self.conn.close()
 
     def close(self):
         if self.conn:

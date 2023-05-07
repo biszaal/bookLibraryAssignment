@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from Account import Account
-
+from Book import Book
 
 class User:
     def __init__(self, uid, name, password, uType):
@@ -10,7 +10,7 @@ class User:
         self.uType = uType
 
     def __repr__(self):
-        return f"{self.name}, {self.lBooksB}"
+        return f"{self.name}, {self.uType}"
 
     def verify(self, password):
         user_data = db.get_user(self.uid)
@@ -28,12 +28,13 @@ class User:
 
     def borrow_book(self, db, isbn):
         book = db.get_book(isbn)
+        book = Book(book[0], book[1], book[2], book[3], book[4], book[5])
 
         if not book:
             print("Incorrect ISBN.")
             return
 
-        isAvailable = book[4] > 0
+        isAvailable = book.available > 0
         no_borrowed_books = db.get_account(self.uid)[3]
         isReserved = not not db.get_reserved_book(isbn, self.uid)
         
@@ -46,10 +47,9 @@ class User:
             return
         
         if book:
-            print(book)
             borrow_date = datetime.now().strftime("%Y-%m-%d")
             db.borrow_book(isbn, self.uid, borrow_date, isReserved)
-            print(f"You have successfully borrowed {book[1]}")
+            print(f"You have successfully borrowed {book.title}")
 
         else:
             print("Error, Cannot borrow book")
@@ -65,6 +65,7 @@ class User:
 
             if borrowed_book_data:
                 borrow_date = datetime.strptime(borrowed_book_data[3], "%Y-%m-%d")
+                today = datetime.now().strftime("%Y-%m-%d")
                 days = (datetime.now() - borrow_date).days
 
                 if days > 7:
@@ -76,7 +77,7 @@ class User:
                         f"You have been charged {fine} pounds fine for overdue of {days} days")
                     print("Fine has been added to your account and can be paid later.")
 
-                db.return_book(isbn, self.uid)
+                db.return_book(isbn, self.uid, today)
                 print(f"You have successfully returned {book[1]}")
             else:
                 print("This book was not borrowed by you. Cannot return the book.")
@@ -134,31 +135,31 @@ class User:
         else:
             print("Cannot return the book. Invalid ISBN.")
 
-    def pay_fine(self, db, amount):
-        account_obj = db.get_account(self.uid)
-        current_fine = account_obj[5]
 
-        if amount > current_fine:
-            print(
-                "The entered amount is greater than the fine amount.")
-        elif amount <= 0:
-            print("Please enter a positive amount to pay the fine.")
+    def search_books(self, db, keyword):
+        results = db.search_books(keyword)
+
+        if results:
+            print("Search results:")
+            print("ISBN | Title | Author | Category | Publication Year | Available")
+            for book in results:
+                print(
+                    f"{book[0]} | {book[1]} | {book[2]} | {book[3]} | {book[4]} | {book[5]}")
         else:
-            new_fine_amount = current_fine - amount
-            db.update_fine(self.uid, new_fine_amount)
-            print(
-                f"Fine payment of ${amount} successful. Remaining fine amount: ${new_fine_amount}")
+            print("No results found.")
 
     def menu(self, db):
-        account = db.get_account(self.uid)
+        account_obj = db.get_account(self.uid)
+        account = Account(self.uid, account_obj[3], account_obj[2], account_obj[1], account_obj[4], account_obj[5])
         while True:
             print("""
                     1. Borrow a book
                     2. Return a book
-                    3. Reserve a book
-                    4. Renew a book
-                    5. Pay fines
-                    6. View account details
+                    3. Search book
+                    4. Reserve a book
+                    5. Renew a book
+                    6. Pay fines
+                    7. View account details
                     q. Quit
                     """)
 
@@ -173,24 +174,27 @@ class User:
                 isbn = input("Enter the ISBN of the book to return: ")
                 self.return_book(db, isbn)
             elif choice == '3':
+                keyword = input("Enter the keyword to search a book: ")
+                self.search_books(db, keyword)
+            elif choice == '4':
                 isbn = input("Enter the ISBN of the book to reserve: ")
                 self.reserve_book(db, isbn)
-            elif choice == '4':
+            elif choice == '5':
                 isbn = input("Enter the ISBN of the book to renew: ")
                 self.renew_book(db, isbn)
-            elif choice == '5':
-                print(f"Your fine is {account[5]} pounds.")
-                if account[5] > 0:
-                    amount = float(input("Enter the amount to pay: "))
-                    self.pay_fine(db,amount)
             elif choice == '6':
+                print(f"Your fine is {account.fine_amount} pounds.")
+                if account.fine_amount > 0:
+                    amount = float(input("Enter the amount to pay: "))
+                    account.pay_fine(db,amount)
+            elif choice == '7':
                 print(f"Account details for {self.name}:")
                 print(f"User ID: {self.uid}")
                 print(f"User Type: {self.uType}")
-                print(f"No. of Borrowed Books: {account[3]}")
-                print(f"No. of Reserved Books: {account[2]}")
-                print(f"No. of Returned Books: {account[1]}")
-                print(f"No. of Lost Books: {account[4]}")
-                print(f"Fine Amount: ${account[5]}")
+                print(f"No. of Borrowed Books: {account.no_borrowed_books}")
+                print(f"No. of Reserved Books: {account.no_reserved_books}")
+                print(f"No. of Returned Books: {account.no_returned_books}")
+                print(f"No. of Lost Books: {account.no_lost_books}")
+                print(f"Fine Amount: ${account.fine_amount}")
             else:
                 print("Invalid choice. Please try again.")

@@ -13,13 +13,18 @@ class Account:
         self.fine_amount += fine
         return fine
 
-    def pay_fines(self, amount):
-        if amount <= self.fine_amount:
-            self.fine_amount -= amount
-            print(
-                f"You have paid ${amount}. Remaining fines: ${self.fine_amount}")
-        else:
-            print("Invalid payment amount")
+    def pay_fine(self, db, amount):
+        account_obj = db.get_account(self.uid)
+        current_fine = self.fine_amount
 
-    def menu(self, db):
-        pass
+        if amount > current_fine:
+            print(
+                "The entered amount is greater than the fine amount.")
+        elif amount <= 0:
+            print("Please enter a positive amount to pay the fine.")
+        else:
+            new_fine_amount = current_fine - amount
+            db.update_fine(self.uid, new_fine_amount)
+            print(
+                f"Fine payment of ${amount} successful. Remaining fine amount: ${new_fine_amount}")
+

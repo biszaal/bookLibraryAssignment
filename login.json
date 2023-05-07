@@ -13,11 +13,10 @@
         "studentClass": "software",
         "lBooksB": []
     },
-    "uid": {
-        "password": "password",
-        "name": "name",
-        "uType": "student",
-        "studentClass": "classss",
+    "boss": {
+        "password": "secureone",
+        "name": "Harry",
+        "uType": "librarian",
         "lBooksB": []
     }
 }
