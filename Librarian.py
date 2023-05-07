@@ -6,8 +6,9 @@ class Librarian(User):
     def __init__(self, uid, name, password):
         user = super().__init__(uid, name, password, "librarian")
 
-    def add_book(self, db, isbn, title, author, category, publication_year, available):
-        book = Book(isbn, title, authors, publisher, publication_year, available)
+    def add_book(self, db, isbn, title, author, publisher, language, publication_year, available):
+        book = Book(isbn, title, authors, publisher,
+                    language, publication_year, available)
         db.insert_book(book)
 
     def delete_book(self, db, isbn):
@@ -18,9 +19,10 @@ class Librarian(User):
         if book:
             print(f"Title: {book[1]}")
             print(f"Author: {book[2]}")
-            print(f"Category: {book[3]}")
-            print(f"Publication Year: {book[4]}")
-            print(f"Available: {book[5]}")
+            print(f"Publisher: {book[3]}")
+            print(f"Language: {book[4]}")
+            print(f"Publication Year: {book[5]}")
+            print(f"Available: {book[6]}")
         else:
             print("Book not found")
 
@@ -53,6 +55,10 @@ class Librarian(User):
             print(f"User Type: {user_data[3]}")
         else:
             print("User not found")
+
+    def update_account(self, db, uid, num_returnedBooks=None, num_reservedBooks=None, num_borrowedBooks=None, num_lostBooks=None, fineAmount=None):
+        db.update_account(uid, num_returnedBooks, num_reservedBooks, num_borrowedBooks, num_lostBooks, fineAmount)
+        print(f"Account with User ID: {uid} has been updated.")
 
     def update_book_availability(self, db, isbn, available):
         book = db.get_book(isbn)
@@ -89,6 +95,7 @@ class Librarian(User):
                11. Display a book
                12. View user details
                13. View all borrowed books
+               14. Update user's account
                 q. Quit
                 """)
             choice = input("Select your choice: ")
@@ -100,16 +107,16 @@ class Librarian(User):
                 super().borrow_book(db, isbn)
             elif choice == '2':
                 isbn = input("Enter the ISBN of the book to return: ")
-                self.user.return_book(db, isbn)
+                super().return_book(db, isbn)
             elif choice == '3':
                 keyword = input("Enter the keyword to search a book: ")
-                self.user.search_books(db, keyword)
+                super().search_books(db, keyword)
             elif choice == '4':
                 isbn = input("Enter the ISBN of the book to reserve: ")
-                self.user.reserve_book(db, isbn)
+                super().reserve_book(db, isbn)
             elif choice == '5':
                 isbn = input("Enter the ISBN of the book to renew: ")
-                self.user.renew_book(db, isbn)
+                super().renew_book(db, isbn)
             elif choice == '6':
                 uid = input("Enter the uid of the user: ")
                 self.view_user_record(db, uid)
@@ -126,10 +133,11 @@ class Librarian(User):
                 isbn = input("Enter the book isbn: ")
                 title = input("Enter the book title: ")
                 author = input("Enter the book author: ")
-                category = input("Enter the book category: ")
+                publisher = input("Enter the book publisher: ")
+                language = input("Enter the book language: ")
                 publication_year = input("Enter the book publication year: ")
                 available = int(input("Enter the number of available books: "))
-                self.add_book(db, title, author, category,
+                self.add_book(db, title, author, publisher, language,
                               publication_year, available)
             elif choice == '9':
                 isbn = input("Enter the ISBN of the book to delete: ")
@@ -146,5 +154,31 @@ class Librarian(User):
                 self.view_user_details(db, uid)
             elif choice == '13':
                 self.view_all_borrowed_books(db)
+            elif choice == '14':
+                print("\nUpdate Account")
+                uid = input("Enter the User ID: ")
+                num_returnedBooks = input(
+                    "Enter the number of returned books (press enter to skip): ")
+                num_reservedBooks = input(
+                    "Enter the number of reserved books (press enter to skip): ")
+                num_borrowedBooks = input(
+                    "Enter the number of borrowed books (press enter to skip): ")
+                num_lostBooks = input(
+                    "Enter the number of lost books (press enter to skip): ")
+                fineAmount = input("Enter the fine amount (press enter to skip): ")
+
+                # Convert inputs to appropriate types or set to None if not provided
+                num_returnedBooks = int(
+                    num_returnedBooks) if num_returnedBooks else None
+                num_reservedBooks = int(
+                    num_reservedBooks) if num_reservedBooks else None
+                num_borrowedBooks = int(
+                    num_borrowedBooks) if num_borrowedBooks else None
+                num_lostBooks = int(num_lostBooks) if num_lostBooks else None
+                fineAmount = float(fineAmount) if fineAmount else None
+
+                self.update_account(db, uid, num_returnedBooks, num_reservedBooks,
+                                        num_borrowedBooks, num_lostBooks, fineAmount)
+
             else:
                 print("Invalid choice. Please try again.")

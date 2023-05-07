@@ -21,14 +21,14 @@ class User:
     @classmethod
     def load_user(cls, db, uid):
         user_data = db.get_user(uid)
-        print(user_data)
         if user_data:
             return cls(user_data[0], user_data[1], user_data[2], user_data[3])
         return None
 
     def borrow_book(self, db, isbn):
         book = db.get_book(isbn)
-        book = Book(book[0], book[1], book[2], book[3], book[4], book[5])
+        book = Book(book[0], book[1], book[2],
+                    book[3], book[4], book[5], book[6])
 
         if not book:
             print("Incorrect ISBN.")

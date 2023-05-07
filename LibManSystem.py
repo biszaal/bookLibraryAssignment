@@ -68,7 +68,6 @@ class LibManSystem:
     def authenticate(db, uid, password):
         user = User.load_user(db, uid)
         if user:
-            print(f"User loaded: {user.uid}, {user.password}")
             if user.password == password:
                 return user
         print("User not found or incorrect password.")
@@ -96,7 +95,7 @@ class LibManSystem:
             for book in books:
                 publicationYear = book["publication_date"].split("/")[2]
                 available = random.randint(0, 10)
-                book_obj = Book(book["isbn"], book["title"], book["authors"], book["publisher"], publicationYear,
+                book_obj = Book(book["isbn"], book["title"], book["authors"], book["publisher"], book["language_code"], publicationYear,
                                 available=available)
                 self.database.insert_book(book_obj)
 

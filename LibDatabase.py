@@ -18,6 +18,7 @@ class LibDatabase:
             title TEXT,
             authors TEXT,
             publisher TEXT,
+            language TEXT,
             publicationYear TEXT,
             available INTEGER
             )""")
@@ -87,10 +88,38 @@ class LibDatabase:
         )""")
         self.conn.commit()
 
+    def update_account(self, uid, num_returnedBooks=None, num_reservedBooks=None, num_borrowedBooks=None, num_lostBooks=None, fineAmount=None):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        if num_returnedBooks is not None:
+            self.cursor.execute(
+                "UPDATE accounts SET num_returnedBooks=? WHERE uid=?", (num_returnedBooks, uid))
+
+        if num_reservedBooks is not None:
+            self.cursor.execute(
+                "UPDATE accounts SET num_reservedBooks=? WHERE uid=?", (num_reservedBooks, uid))
+
+        if num_borrowedBooks is not None:
+            self.cursor.execute(
+                "UPDATE accounts SET num_borrowedBooks=? WHERE uid=?", (num_borrowedBooks, uid))
+
+        if num_lostBooks is not None:
+            self.cursor.execute(
+                "UPDATE accounts SET num_lostBooks=? WHERE uid=?", (num_lostBooks, uid))
+
+        if fineAmount is not None:
+            self.cursor.execute(
+                "UPDATE accounts SET fineAmount=? WHERE uid=?", (fineAmount, uid))
+
+        self.conn.commit()
+        self.conn.close()
+
+
     def insert_book(self, book):
         try:
-            self.cursor.execute("INSERT INTO books (isbn, title, authors, publisher, publicationYear, available) VALUES (?, ?, ?, ?, ?, ?)", (
-                book.isbn, book.title, book.authors, book.publisher, book.publicationYear, book.available))
+            self.cursor.execute("INSERT INTO books (isbn, title, authors, publisher, language, publicationYear, available) VALUES (?, ?, ?, ?, ?, ?, ?)", (
+                book.isbn, book.title, book.authors, book.publisher, book.language, book.publicationYear, book.available))
             self.conn.commit()
         except sqlite3.IntegrityError:
             print("Book already exists in the database.")
@@ -143,20 +172,6 @@ class LibDatabase:
         self.conn.close()
         return borrowed_books
 
-
-    def get_reserved_books_by_uid(self, uid):
-        self.conn = sqlite3.connect('main.sqlite')
-        self.cursor = self.conn.cursor()
-
-        query = """SELECT b.*, rb.dateReserved
-                FROM reservedBooks AS rb
-                JOIN books AS b ON rb.isbn = b.isbn
-                WHERE rb.uid = ?"""
-        self.cursor.execute(query, (uid,))
-        reserved_books = self.cursor.fetchall()
-
-        self.conn.close()
-        return reserved_books
 
     def get_reserved_books_by_uid(self, uid):
         self.conn = sqlite3.connect('main.sqlite')
@@ -253,11 +268,11 @@ class LibDatabase:
 
         query = """
         SELECT * FROM books
-        WHERE title LIKE ? OR authors LIKE ? OR publisher LIKE ? OR publicationYear LIKE ?
+        WHERE title LIKE ? OR authors LIKE ? OR publisher LIKE ? OR language LIKE ? OR publicationYear LIKE ?
         """
         wildcard_keyword = f"%{keyword}%"
         self.cursor.execute(
-            query, (wildcard_keyword, wildcard_keyword, wildcard_keyword, wildcard_keyword))
+            query, (wildcard_keyword, wildcard_keyword, wildcard_keyword, wildcard_keyword, wildcard_keyword))
 
         results = self.cursor.fetchall()
 
@@ -377,10 +392,12 @@ class LibDatabase:
         self.cursor = self.conn.cursor()
 
         self.cursor.execute(f'SELECT * FROM users WHERE uid=?', (uid,))
-        return self.cursor.fetchone()
+        user = self.cursor.fetchone()
 
         self.conn.commit()
         self.conn.close()
+
+        return user
 
     def close(self):
         if self.conn:

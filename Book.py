@@ -1,9 +1,10 @@
 class Book:
-    def __init__(self, isbn, title, authors, publisher=None, publicationYear=None, available=0):
+    def __init__(self, isbn, title, authors, publisher=None, language=None, publicationYear=None, available=0):
         self.isbn = isbn
         self.title = title
         self.authors = authors
         self.publisher = publisher
+        self.language = language
         self.publicationYear = publicationYear
         self.available = available
 
