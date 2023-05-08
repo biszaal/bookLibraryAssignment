@@ -341,10 +341,6 @@ class LibDatabase:
             "UPDATE accounts SET num_reservedBooks=num_reservedBooks+1 WHERE uid=?", (uid,))
         self.conn.commit()
 
-    def remove_book(self, b):
-        self.cursor.execute("DELETE from books WHERE isbn=?", (b.isbn,))
-        self.conn.commit()
-
     def get_users(self):
         self.conn = sqlite3.connect('main.sqlite')
         self.cursor = self.conn.cursor()

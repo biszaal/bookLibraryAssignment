@@ -6,10 +6,6 @@ class Student(User):
         super().__init__(uid, name, password, "student")
         self.studentClass = studentClass
 
+    # I have implemented menu to the User because both Staff and Student has the same options
     def menu(self, db):
-        print("""
-            1. Option-1
-            2. Option-2
-            3. Option-3
-            q. Quit
-            """)
+        super().menu(db)

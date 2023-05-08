@@ -11,24 +11,24 @@ class Book:
     def __repr__(self):
         return f"{self.title}\n~ {self.authors.split('/').join(', ')}\n~ {self.isbn}"
 
-    def set_borrow_date(self):
-        self.borrow_date = datetime.now()
-        self.due_date = self.borrow_date + datetime.timedelta(days=7)
+    # def set_borrow_date(self):
+    #     self.borrow_date = datetime.now()
+    #     self.due_date = self.borrow_date + datetime.timedelta(days=7)
 
-    def set_reservation_status(self, status):
-        self.reserved = status
+    # def set_reservation_status(self, status):
+    #     self.reserved = status
 
-    def showDueDate(self):
-        return self.due_date
+    # def showDueDate(self):
+    #     return self.due_date
 
-    def reservationStatus(self):
-        return self.reserved
+    # def reservationStatus(self):
+    #     return self.reserved
 
-    def feedback(self):
-        self.feedback_list.append(feedback_text)
+    # def feedback(self):
+    #     self.feedback_list.append(feedback_text)
 
-    def bookRequest(self):
-        pass
+    # def bookRequest(self):
+    #     pass
 
-    def renewInfo(self):
-        self.set_borrow_date()
+    # def renewInfo(self):
+    #     self.set_borrow_date()

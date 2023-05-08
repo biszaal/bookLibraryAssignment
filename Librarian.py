@@ -76,6 +76,15 @@ class Librarian(User):
         else:
             print("No borrowed books found")
 
+    def view_all_reserved_books(self, db):
+        reserved_books = db.get_all_reserved_books()
+        if reserved_books:
+            for book in reserved_books:
+                print(
+                    f"ISBN: {book[0]}, Reserved User ID: {book[1]}, Rorrow Date: {book[2]}")
+        else:
+            print("No reserved books found")
+
     def lib_menu(self, db):
         account_obj = db.get_account(self.uid)
         account = Account(
@@ -95,7 +104,8 @@ class Librarian(User):
                11. Display a book
                12. View user details
                13. View all borrowed books
-               14. Update user's account
+               14. View all reserved books
+               15. Update user's account
                 q. Quit
                 """)
             choice = input("Select your choice: ")
@@ -155,6 +165,8 @@ class Librarian(User):
             elif choice == '13':
                 self.view_all_borrowed_books(db)
             elif choice == '14':
+                self.view_all_reserved_books(db)
+            elif choice == '15':
                 print("\nUpdate Account")
                 uid = input("Enter the User ID: ")
                 num_returnedBooks = input(

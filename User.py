@@ -87,7 +87,7 @@ class User:
 
     def reserve_book(self, db, isbn):
         book = db.get_book(isbn)
-        isAvailable = book[4] > 0
+        isAvailable = book[6] > 0
 
         if isAvailable:
             print("The book is available please select 1. to borrow the book.")
@@ -130,10 +130,10 @@ class User:
                 db.renew_book(isbn, self.uid, newDate)
                 print(f"You have successfully renewed {book[1]}, the new due date is {newDueDate}")
             else:
-                print("This book was not borrowed by you. Cannot return the book.")
+                print("This book was not borrowed by you. Cannot renew the book.")
 
         else:
-            print("Cannot return the book. Invalid ISBN.")
+            print("Cannot renew the book. Invalid ISBN.")
 
 
     def search_books(self, db, keyword):
