@@ -13,9 +13,6 @@ from LibDatabase import LibDatabase
 class LibManSystem:
     def __init__(self):
         self.database = LibDatabase()
-        self.database.create_books_table()
-        self.database.create_users_table()
-        self.database.create_accounts_table()
         self.load_books()
         self.load_users()
         self.menu()
@@ -32,6 +29,7 @@ class LibManSystem:
             elif choice == "2":
                 self.register()
             elif choice == "3":
+                self.close()
                 break
             else:
                 print("Invalid choice. Please try again.")
@@ -45,7 +43,6 @@ class LibManSystem:
             "Enter user type (student, staff, or librarian): ").lower()
         studentClass = None
         department = None
-
         user_obj = None
 
         if (uType == "student"):
@@ -104,7 +101,7 @@ class LibManSystem:
             users = json.load(f)
             for uid, data in users.items():
                 print(
-                    f"Trying to load account: {uid}, {data['password']}, {data['name']}, {data['uType']}")
+                    f"Trying to load account: {uid}, {data['name']}, {data['uType']}")
 
                 user_obj = None
                 if data["uType"] == "staff":

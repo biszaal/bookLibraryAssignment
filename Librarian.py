@@ -49,10 +49,11 @@ class Librarian(User):
 
     def view_user_details(self, db, uid):
         user_data = db.get_user(uid)
+        user_data = User(user_data[0], user_data[1], user_data[2], user_data[3])
         if user_data:
-            print(f"User ID: {user_data[0]}")
-            print(f"Name: {user_data[1]}")
-            print(f"User Type: {user_data[3]}")
+            print(f"User ID: {user_data.uid}")
+            print(f"Name: {user_data.name}")
+            print(f"User Type: {user_data.uType}")
         else:
             print("User not found")
 
@@ -81,9 +82,18 @@ class Librarian(User):
         if reserved_books:
             for book in reserved_books:
                 print(
-                    f"ISBN: {book[0]}, Reserved User ID: {book[1]}, Rorrow Date: {book[2]}")
+                    f"ISBN: {book[0]}, Reserved User ID: {book[1]}, Borrow Date: {book[2]}")
         else:
             print("No reserved books found")
+    
+    def view_all_returned_books(self,db):
+        returned_books = db.get_all_returned_books()
+        if returned_books:
+            for book in returned_books:
+                print(
+                    f"ISBN: {book[0]}, User ID: {book[1]}, Borrow Date: {book[2]}, Return Date: {book[3]}")
+        else:
+            print("No returned books found")
 
     def lib_menu(self, db):
         account_obj = db.get_account(self.uid)
@@ -106,6 +116,7 @@ class Librarian(User):
                13. View all borrowed books
                14. View all reserved books
                15. Update user's account
+               16. View book report
                 q. Quit
                 """)
             choice = input("Select your choice: ")
@@ -191,6 +202,13 @@ class Librarian(User):
 
                 self.update_account(db, uid, num_returnedBooks, num_reservedBooks,
                                         num_borrowedBooks, num_lostBooks, fineAmount)
-
+            elif choice == '16':
+                print("\nView List of Borrowed, Returned, and Reserved Books")
+                print("\nBorrowed Books:")
+                self.view_all_borrowed_books(db)
+                print("\Reserved Books:")
+                self.view_all_reserved_books(db)
+                print("\Returned Books:")
+                self.view_all_returned_books(db)
             else:
                 print("Invalid choice. Please try again.")

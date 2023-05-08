@@ -46,19 +46,6 @@ class LibDatabase:
         )""")
         self.conn.commit()
 
-    def get_account(self, uid):
-        self.conn = sqlite3.connect('main.sqlite')
-        self.cursor = self.conn.cursor()
-
-        query = "SELECT * FROM accounts WHERE uid = ?"
-        self.cursor.execute(query, (uid,))
-        account_data = self.cursor.fetchone()
-
-        self.conn.close()
-
-        if account_data:
-            return account_data
-        return None
 
     def create_borrowed_books_table(self):
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS borrowedBooks(
@@ -87,6 +74,32 @@ class LibDatabase:
             dateReturned TEXT
         )""")
         self.conn.commit()
+
+    def get_all_returned_books(self):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = """SELECT * FROM returnedBooks"""
+        self.cursor.execute(query)
+        returned_books = self.cursor.fetchall()
+
+        self.conn.close()
+        return returned_books
+
+
+    def get_account(self, uid):
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
+        query = "SELECT * FROM accounts WHERE uid = ?"
+        self.cursor.execute(query, (uid,))
+        account_data = self.cursor.fetchone()
+
+        self.conn.close()
+
+        if account_data:
+            return account_data
+        return None
 
     def update_account(self, uid, num_returnedBooks=None, num_reservedBooks=None, num_borrowedBooks=None, num_lostBooks=None, fineAmount=None):
         self.conn = sqlite3.connect('main.sqlite')
@@ -367,6 +380,10 @@ class LibDatabase:
         self.conn.close()
 
     def insert_user(self, user):
+
+        self.conn = sqlite3.connect('main.sqlite')
+        self.cursor = self.conn.cursor()
+
         try:
             if user.uType == "staff":
                 self.cursor.execute("INSERT INTO users (uid, password, name, uType, department) VALUES (?, ?, ?, ?, ?)", (
@@ -382,6 +399,8 @@ class LibDatabase:
             print(f"User {user.uid} inserted successfully.")
         except sqlite3.IntegrityError:
             print(f"User {user.uid} already exists in the database.")
+
+        self.conn.close()
 
     def get_user(self, uid):
         self.conn = sqlite3.connect('main.sqlite')
