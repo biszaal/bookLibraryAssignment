@@ -4,28 +4,73 @@ from Book import Book
 
 class User:
     def __init__(self, uid, name, password, uType):
+        """
+        Initialize the User object with user ID, name, password, and user type.
+
+        Parameters
+        ----------
+        uid : int
+            The unique user ID.
+        name : str
+            The user's name.
+        password : str
+            The user's password.
+        uType : str
+            The user's type (admin or user).
+        """
         self.uid = uid
         self.name = name
         self.password = password
         self.uType = uType
 
     def __repr__(self):
-        return f"{self.name}, {self.uType}"
+        """
+        String representation of the User object.
 
-    def verify(self, password):
-        user_data = db.get_user(self.uid)
-        if user_data:
-            return user_data[2] == self.account_type
-        return False
+        Returns
+        -------
+        str
+            The string representation of the User object containing the user's name and type.
+        """
+        return f"{self.name}, {self.uType}"
 
     @classmethod
     def load_user(cls, db, uid):
+        """
+        Load a user from the database by user ID.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+        uid : int
+            The unique user ID.
+
+        Returns
+        -------
+        User object
+            The User object if found in the database, otherwise None.
+        """
         user_data = db.get_user(uid)
         if user_data:
             return cls(user_data[0], user_data[1], user_data[2], user_data[3])
         return None
 
     def borrow_book(self, db, isbn):
+        """
+        Borrow a book from the library.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+        isbn : str
+            The unique ISBN of the book to borrow.
+
+        Returns
+        -------
+        None
+        """
         book = db.get_book(isbn)
         book = Book(book[0], book[1], book[2],
                     book[3], book[4], book[5], book[6])
@@ -56,6 +101,20 @@ class User:
 
 
     def return_book(self, db, isbn):
+        """
+        Return a borrowed book to the library.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+        isbn : str
+            The unique ISBN of the book to return.
+
+        Returns
+        -------
+        None
+        """
         book = db.get_book(isbn)
         if book:
             print(book)
@@ -86,6 +145,20 @@ class User:
             print("Cannot return the book. Invalid ISBN.")
 
     def reserve_book(self, db, isbn):
+        """
+        Reserve a book that is currently unavailable in the library.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+        isbn : str
+            The unique ISBN of the book to reserve.
+
+        Returns
+        -------
+        None
+        """
         book = db.get_book(isbn)
         isAvailable = book[6] > 0
 
@@ -103,6 +176,20 @@ class User:
             print("Error, Cannot reserve book")
 
     def renew_book(self, db, isbn):
+        """
+        Renew a borrowed book, extending the due date.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+        isbn : str
+            The unique ISBN of the book to renew.
+
+        Returns
+        -------
+        None
+        """
         book = db.get_book(isbn)
         if book:
             print(book)
@@ -137,18 +224,70 @@ class User:
 
 
     def search_books(self, db, keyword):
+        """
+        Search for books in the library using a keyword.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+        keyword : str
+            The keyword to search for books.
+
+        Returns
+        -------
+        None
+        """
         results = db.search_books(keyword)
 
         if results:
             print("Search results:")
-            print("ISBN | Title | Author | Category | Publication Year | Available")
+            print(
+                "ISBN | Title | Author | Publisher | Language | Publication Year | Available")
             for book in results:
                 print(
-                    f"{book[0]} | {book[1]} | {book[2]} | {book[3]} | {book[4]} | {book[5]}")
+                    f"{book[0]} | {book[1]} | {book[2]} | {book[3]} | {book[4]} | {book[5]} | {book[6]}")
         else:
             print("No results found.")
 
+    def get_user_details(self, db):
+        """
+        Display the user's account details.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+
+        Returns
+        -------
+        None
+        """
+        account_obj = db.get_account(self.uid)
+        account = Account(
+            self.uid, account_obj[3], account_obj[2], account_obj[1], account_obj[4], account_obj[5])
+        print(f"Account details for {self.name}:")
+        print(f"User ID: {self.uid}")
+        print(f"User Type: {self.uType}")
+        print(f"No. of Borrowed Books: {account.no_borrowed_books}")
+        print(f"No. of Reserved Books: {account.no_reserved_books}")
+        print(f"No. of Returned Books: {account.no_returned_books}")
+        print(f"No. of Lost Books: {account.no_lost_books}")
+        print(f"Fine Amount: ${account.fine_amount}")
+
     def menu(self, db):
+        """
+        Display the user menu and handle user input for performing various actions.
+
+        Parameters
+        ----------
+        db : object
+            The database object.
+
+        Returns
+        -------
+        None
+        """
         account_obj = db.get_account(self.uid)
         account = Account(self.uid, account_obj[3], account_obj[2], account_obj[1], account_obj[4], account_obj[5])
         while True:
@@ -188,13 +327,6 @@ class User:
                     amount = float(input("Enter the amount to pay: "))
                     account.pay_fine(db,amount)
             elif choice == '7':
-                print(f"Account details for {self.name}:")
-                print(f"User ID: {self.uid}")
-                print(f"User Type: {self.uType}")
-                print(f"No. of Borrowed Books: {account.no_borrowed_books}")
-                print(f"No. of Reserved Books: {account.no_reserved_books}")
-                print(f"No. of Returned Books: {account.no_returned_books}")
-                print(f"No. of Lost Books: {account.no_lost_books}")
-                print(f"Fine Amount: ${account.fine_amount}")
+                self.get_user_details(db)
             else:
                 print("Invalid choice. Please try again.")

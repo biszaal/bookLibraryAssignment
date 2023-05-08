@@ -12,12 +12,22 @@ from LibDatabase import LibDatabase
 
 class LibManSystem:
     def __init__(self):
+        """
+        Initialize the database, load books and users, and display the main menu.
+
+        No parameters or return value.
+        """
         self.database = LibDatabase()
         self.load_books()
         self.load_users()
         self.menu()
 
     def menu(self):
+        """
+        Main menu loop for the Library Management System.
+        
+        No parameters or return value.
+        """
         while True:
             print("Welcome to the Library Management System")
             print("1. Login")
@@ -35,6 +45,11 @@ class LibManSystem:
                 print("Invalid choice. Please try again.")
 
     def register(self):
+        """
+        Create a new user account.
+        
+        No parameters or return value.
+        """
         print("Create a new account")
         uid = input("Enter a uid: ")
         name = input("Enter your name: ")
@@ -63,6 +78,23 @@ class LibManSystem:
 
     @staticmethod
     def authenticate(db, uid, password):
+        """
+        Check if the user with the given uid and password exists in the database.
+        
+        Parameters
+        ----------
+        db : LibDatabase object
+            An object for querying the database.
+        uid : str
+            The user ID to look for.
+        password : str
+            The password to match with the user.
+        
+        Returns
+        -------
+        user : User object
+            The authenticated User object if found, otherwise None.
+        """
         user = User.load_user(db, uid)
         if user:
             if user.password == password:
@@ -71,6 +103,11 @@ class LibManSystem:
         return None
 
     def login(self):
+        """
+        Authenticate the user and let them access their account.
+
+        No parameters or return value.
+        """
         while True:
             print("Welcome...")
             uid = input("User ID: ")
@@ -87,6 +124,11 @@ class LibManSystem:
                 print("Login failed. Please try again.")
 
     def load_books(self):
+        """
+        Load books from the books.json file into the database.
+        
+        No parameters or return value.
+        """
         with open('books.json') as f:
             books = json.load(f)
             for book in books:
@@ -97,6 +139,11 @@ class LibManSystem:
                 self.database.insert_book(book_obj)
 
     def load_users(self):
+        """
+        Load users from the login.json file into the database.
+        
+        No parameters or return value.
+        """
         with open('login.json') as f:
             users = json.load(f)
             for uid, data in users.items():
@@ -121,5 +168,10 @@ class LibManSystem:
                         f"User {uid} already exists in the database. Skipping.")
 
     def close(self):
+        """
+        Close the database connection and print a message.
+        
+        No parameters or return value.
+        """
         self.database.close()
         print("Database connection closed.")
